@@ -1,0 +1,887 @@
+//1.1删除标志文件及log日志文件
+py begin
+# -*- coding: utf-8 -*-
+import os
+import csv
+
+dirpath="/root/rpa_file/"
+
+if (os.path.exists(dirpath+"start")):
+    os.remove(dirpath+"start")
+
+if (os.path.exists(dirpath+"finish")):
+    os.remove(dirpath+"finish")
+
+if (os.path.exists(dirpath+"error.txt")):
+    os.remove(dirpath+"error.txt")
+
+if (os.path.exists(dirpath+"retry")):
+    os.remove(dirpath+"retry")
+
+if (os.path.exists(dirpath+"log.txt")):
+    os.remove(dirpath+"log.txt")
+
+if (os.path.exists("/root/record_scores/period.csv")):
+    os.remove("/root/record_scores/period.csv")
+
+py finish
+//1.2创建参数info文件(先删除历史文件Info,wrong,record,web_number)
+py begin
+# -*- coding: utf-8 -*-
+import os
+import csv
+
+dirpath="/root/record_scores/"
+
+if (os.path.exists(dirpath+"info.csv")):
+    os.remove(dirpath+"info.csv")
+if (os.path.exists(dirpath+"wrong.csv")):
+    os.remove(dirpath+"wrong.csv")
+if (os.path.exists(dirpath+"record.csv")):
+    os.remove(dirpath+"record.csv")
+if (os.path.exists(dirpath+"web_number.csv")):
+    os.remove(dirpath+"web_number.csv")
+
+with open(dirpath+"info.csv","w") as csvfile:
+    writer = csv.writer(csvfile)
+    writer.writerow(["upload_file","course_series","grade_selection","username","password","grade_persentage"])
+
+py finish
+//1.3接收参数存入文件中，写入文件路径固定
+echo "p1 is " p1
+echo "p2 is " p2
+echo "p3 is " p3
+echo "p4 is " p4
+echo "p5 is " p5
+echo "p5 is " p6
+item_info=[p1,p2,p3,p4,p5,p6]
+write csv_row(item_info) to info.csv
+//1.4根据info.csv创建csv及xlsx(先删除历史文件)
+py begin
+# encoding:utf-8
+import pandas as pd
+import sys
+import codecs
+import xlrd
+import xlwt
+from xlutils.copy import copy
+from openpyxl import load_workbook
+from openpyxl.styles import Font, PatternFill, colors
+import csv
+import os
+#sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
+reload(sys)
+sys.setdefaultencoding('utf8')
+
+def get_userinfo():
+    birth_weight_file = '/root/record_scores/info.csv'  # 路径固定
+    with open(birth_weight_file) as csvfile:
+        mLines = csvfile.readlines()
+    targetLine = mLines[-1]
+    file_name = targetLine.split(',')[0]
+    course_series = targetLine.split(',')[1]
+    username = targetLine.split(',')[3]
+    password = targetLine.split(',')[4]
+    return file_name,course_series,username,password
+
+file_name,course_series,username,password=get_userinfo()
+create_csv='/root/record_scores/'+course_series+'.csv'
+check_file='/root/rpa_file/'+course_series+'-check.xlsx'
+check_png='/root/rpa_file/'+course_series+'.png'
+
+#先判断是否有该课程序号的csv文件，xlsx文件及png文件。有则删除
+if (os.path.exists(create_csv)):
+    os.remove(create_csv)
+if (os.path.exists(check_file)):
+    os.remove(check_file)
+if (os.path.exists(check_png)):
+    os.remove(check_png)
+
+#excel文件转csv格式,并统一转xlsx格式
+def get_student_list(path):  # 读取excel
+    df = pd.read_excel(path)
+    datadict = df.fillna('').to_dict(orient='record')
+    return datadict, df
+
+student_list, excel_tmp = get_student_list(file_name)  # 上传的原文件
+excel_tmp.to_csv(create_csv,encoding='utf-8-sig')
+excel_tmp.to_excel(check_file)
+wb=load_workbook(check_file)
+sheet_names = wb.get_sheet_names()
+ws = wb.get_sheet_by_name(sheet_names[0])
+ws.delete_cols(1)
+wb.save(check_file)
+
+
+#data_xls = pd.read_excel(check_file, index_col=0)
+#data_xls.to_csv(create_csv, encoding='utf-8')
+
+
+py finish
+//从info.csv读输入账号密码
+csv_file='info.csv'
+load '+csv_file+' to lines
+array_lines=lines.split('\n')
+items = array_lines[1].split(',')
+course_series=items[1]
+username=items[3]
+psw=items[4]
+per_1=items[5]
+per=per_1.split('/')
+wrong_number=[]
+number=[]
+usual_1=[]
+usual_2=[]
+usual_3=[]
+middle=[]
+end=[]
+csv_file=''+course_series+'.csv'
+load '+csv_file+' to lines
+array_lines=lines.split('\n')
+//获取文件中有录入内容列
+number_col=-1
+end_col=-1
+middle_col=-1
+u3_col=-1
+u2_col=-1
+u1_col=-1
+items = array_lines[0].split(',')
+for (n=1; n<items.length; n++)
+{
+if (items[n].trim()=='学号' or items[n].trim()=='考号')
+{
+number_col=n
+}
+if (items[n].trim()=='期末' or items[n].trim()=='总分')
+{
+end_col=n
+}
+if (items[n].trim()=='期中')
+{
+middle_col=n
+}
+if (items[n].trim()=='平时成绩3' or items[n].trim()=='平时成绩I')
+{
+u3_col=n
+}
+if (items[n].trim()=='平时成绩2' or items[n].trim()=='平时成绩II')
+{
+u2_col=n
+}
+if (items[n].trim()=='平时成绩1' or items[n].trim()=='平时成绩Ⅲ')
+{
+u1_col=n
+}
+}
+echo number_col+' '+end_col+' '+middle_col+' '+u3_col+' '+u2_col+' '+u1_col
+//period.csv记录列位置
+period=['0|'+number_col]
+write csv_row(period) to period.csv
+items = array_lines[1].split(',')
+if (u1_col!=-1 and items[u1_col]!='')
+{
+str='1|'+u1_col
+write csv_row([str]) to period.csv
+}
+if (u2_col!=-1 and items[u2_col]!='')
+{
+str='2|'+u2_col
+write csv_row([str]) to period.csv
+}
+if (u3_col!=-1 and items[u3_col]!='')
+{
+str='3|'+u3_col
+write csv_row([str]) to period.csv
+}
+if (middle_col!=-1 and items[middle_col]!='')
+{
+str='4|'+middle_col
+write csv_row([str]) to period.csv
+}
+if (end_col!=-1 and items[end_col]!='')
+{
+str='5|'+end_col
+write csv_row([str]) to period.csv
+}
+py begin
+# encoding:utf-8
+import pandas as pd
+import sys
+import codecs
+import xlrd
+import xlwt
+from xlutils.copy import copy
+from openpyxl import load_workbook
+from openpyxl.styles import Font, PatternFill, colors
+import csv
+import os
+#sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
+reload(sys)
+sys.setdefaultencoding('utf8')
+
+def get_userinfo():
+    birth_weight_file = '/root/record_scores/info.csv'  # 路径固定
+    with open(birth_weight_file) as csvfile:
+        mLines = csvfile.readlines()
+    targetLine = mLines[-1]
+    file_name = targetLine.split(',')[0]
+    course_series = targetLine.split(',')[1]
+    username = targetLine.split(',')[3]
+    password = targetLine.split(',')[4]
+    return file_name,course_series,username,password
+
+file_name,course_series,username,password=get_userinfo()
+create_csv='/root/record_scores/'+course_series+'.csv'
+check_file='/root/rpa_file/'+course_series+'-check.xlsx'
+check_png='/root/rpa_file/'+course_series+'.png'
+
+# 获取period.csv写入列位置
+birth_weight_file = '/root/record_scores/period.csv'  # 路径固定
+with open(birth_weight_file) as csvfile:
+    period = csvfile.readlines()
+print(period)
+period_1=[]
+period_2=[]
+for p in period:
+    p=p.split('\r\n')
+    p1=p[0]
+    period_1.append(p1)
+print(period_1)
+for p in period_1:
+    p=p.split('|')
+    p1=p[1]
+    period_2.append(p1)
+print(period_2)
+number_col=period_2[0]
+print(number_col)
+
+
+wb = load_workbook(check_file)
+ws = wb.worksheets[0]
+rows=ws.max_row   #获取行数
+cols=ws.max_column
+
+numbers=[]
+for i in range(2,rows+1):
+    for index in period_1[1:]:
+        p=index.split('|')
+        index=int(p[1])
+        c_index=int(p[0])
+        score = int(ws.cell(row=i, column=index).value)
+        ws.cell(row=i, column=index, value=score)
+
+wb.save(check_file)
+
+#excel文件转csv格式,并统一转xlsx格式
+def get_student_list(path):  # 读取excel
+    df = pd.read_excel(path)
+    datadict = df.fillna('').to_dict(orient='record')
+    return datadict, df
+
+
+student_list, excel_tmp = get_student_list(check_file)  # 上传的原文件
+excel_tmp.to_csv(create_csv,encoding='utf-8-sig')
+
+py finish
+//创建开始标志文件
+py begin
+# -*- coding: utf-8 -*-
+import os
+
+dirpath="/root/rpa_file/"
+#若存在start文件则删除
+if (os.path.exists(dirpath+"start")):
+    os.remove(dirpath+"start")
+
+#创建标志文件
+def text_create(name):
+    desktop_path = dirpath
+    full_path = desktop_path + name
+    file = open(full_path, 'w')
+
+text_create('start')
+
+py finish
+//创建日志文件
+js begin
+function formatDate(date) {
+    var d = new Date(date),
+        mm = '' + (d.getMonth() + 1),
+        dd = '' + d.getDate(),
+        yy = d.getFullYear(),
+        hh = '' + d.getHours(),
+        min = '' + d.getMinutes();
+    return [yy.toString(), (mm>9?'':'0')+mm, (dd>9?'':'0')+dd].join('-') + "_"+ (hh>9?'':'0')+hh+':'+(min>9?'':'0')+min;
+}
+now = formatDate(new Date());
+js finish
+write now+'录分流程开始' to /root/rpa_file/log.txt
+//正式环境
+https://jx.sspu.edu.cn/eams/caslogin.action
+//测试环境
+//http://202.121.241.67:8080/eams/login.action?ekingstar=2
+wait 2
+dclick //input[@id="username"]
+wait 1
+enter //input[@id="username"] as '+username+'
+wait 1
+dclick //input[@id="password"]
+wait 1
+enter //input[@id="password"] as '+psw+'
+wait 1
+click //input[@class="ip_2"]
+wait 2
+//出现用户密码错误则说明账号或者密码错误
+if present('//td[@class="td_1"]//font')
+{
+js begin
+function formatDate(date) {
+    var d = new Date(date),
+        mm = '' + (d.getMonth() + 1),
+        dd = '' + d.getDate(),
+        yy = d.getFullYear(),
+        hh = '' + d.getHours(),
+        min = '' + d.getMinutes();
+    return [yy.toString(), (mm>9?'':'0')+mm, (dd>9?'':'0')+dd].join('-') + "_"+ (hh>9?'':'0')+hh+':'+(min>9?'':'0')+min;
+}
+now = formatDate(new Date());
+js finish
+write now+'账号密码错误' to /root/rpa_file/log.txt
+write '账号密码错误' to /root/rpa_file/error.txt
+}
+else
+{
+js begin
+function formatDate(date) {
+    var d = new Date(date),
+        mm = '' + (d.getMonth() + 1),
+        dd = '' + d.getDate(),
+        yy = d.getFullYear(),
+        hh = '' + d.getHours(),
+        min = '' + d.getMinutes();
+    return [yy.toString(), (mm>9?'':'0')+mm, (dd>9?'':'0')+dd].join('-') + "_"+ (hh>9?'':'0')+hh+':'+(min>9?'':'0')+min;
+}
+now = formatDate(new Date());
+js finish
+write now+'输入账号密码' to /root/rpa_file/log.txt
+//测试
+//http://202.121.241.67:8080/eams/teach/grade/course/teacher.action
+//正式
+https://jx.sspu.edu.cn/eams/teach/grade/course/teacher.action
+wait 1
+if present('//td[contains(text(),"'+course_series+'")]')
+{
+read //td[contains(text(),"'+course_series+'")]/..//td[7] to total
+echo total
+read //td[contains(text(),"'+course_series+'")]/..//td[last()]//a[3]/@href to url
+//正式
+URL='jx.sspu.edu.cn'+url
+//测试
+//URL='202.121.241.67:8080' + url
+http://'+URL+'
+wait 2
+click //div[@id="tabPage2_1"]//td[4]//a[1]
+wait 2
+js begin
+function formatDate(date) {
+    var d = new Date(date),
+        mm = '' + (d.getMonth() + 1),
+        dd = '' + d.getDate(),
+        yy = d.getFullYear(),
+        hh = '' + d.getHours(),
+        min = '' + d.getMinutes();
+    return [yy.toString(), (mm>9?'':'0')+mm, (dd>9?'':'0')+dd].join('-') + "_"+ (hh>9?'':'0')+hh+':'+(min>9?'':'0')+min;
+}
+now = formatDate(new Date());
+js finish
+write now+'开始录入' to /root/rpa_file/log.txt
+wrong_number=[]
+number=[]
+usual_1=[]
+usual_2=[]
+usual_3=[]
+middle=[]
+end=[]
+csv_file=''+course_series+'.csv'
+load '+csv_file+' to lines
+array_lines=lines.split('\n')
+echo total
+//读网页上所有学号
+for (n=1; n<=total; n++)
+{
+id=n+1
+if present('//*[@id="gradeForm"]/table[2]/tbody/tr['+id+']/td[2]/text()')
+{
+id=n+1
+read //*[@id="gradeForm"]/table[2]/tbody/tr['+id+']/td[2]/text() to wnumber
+echo wnumber
+web_number = [wnumber]
+write csv_row(web_number) to web_number.csv
+}
+if present('//*[@id="gradeForm"]/table[2]/tbody/tr['+id+']/td[9]/text()')
+{
+read //*[@id="gradeForm"]/table[2]/tbody/tr['+id+']/td[9]/text() to wnumber
+echo wnumber
+web_number = [wnumber]
+write csv_row(web_number) to web_number.csv
+}
+}
+js begin
+function formatDate(date) {
+    var d = new Date(date),
+        mm = '' + (d.getMonth() + 1),
+        dd = '' + d.getDate(),
+        yy = d.getFullYear(),
+        hh = '' + d.getHours(),
+        min = '' + d.getMinutes();
+    return [yy.toString(), (mm>9?'':'0')+mm, (dd>9?'':'0')+dd].join('-') + "_"+ (hh>9?'':'0')+hh+':'+(min>9?'':'0')+min;
+}
+now = formatDate(new Date());
+js finish
+write now+'结束校对' to /root/rpa_file/log.txt
+snap page to /root/rpa_file/'+course_series+'.png
+//根据wrong.csv和record.csv对原始文件修改
+py begin
+# encoding:utf-8
+import pandas as pd
+import sys
+import codecs
+import xlrd
+import xlwt
+from xlutils.copy import copy
+from openpyxl import load_workbook
+from openpyxl.styles import Font, PatternFill, colors
+import csv
+import os
+#sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
+reload(sys)
+sys.setdefaultencoding('utf8')
+
+
+def get_userinfo():
+    birth_weight_file = '/root/record_scores/info.csv'  # 路径固定
+    with open(birth_weight_file) as csvfile:
+        mLines = csvfile.readlines()
+    targetLine = mLines[-1]
+    file_name = targetLine.split(',')[0]
+    course_series = targetLine.split(',')[1]
+    username = targetLine.split(',')[3]
+    password = targetLine.split(',')[4]
+    return file_name,course_series,username,password
+
+
+file_name,course_series,username,password=get_userinfo()
+check_file='/root/rpa_file/'+course_series+'-check.xlsx'
+fill_red = PatternFill("solid", fgColor="FF0000")
+fill_green = PatternFill("solid", fgColor="C1F4B8")
+
+# 获取period.csv写入列位置
+birth_weight_file = '/root/record_scores/period.csv'  # 路径固定
+with open(birth_weight_file) as csvfile:
+    period = csvfile.readlines()
+print(period)
+period_1=[]
+period_2=[]
+for p in period:
+    p=p.split('\r\n')
+    p1=p[0]
+    period_1.append(p1)
+print(period_1)
+for p in period_1:
+    p=p.split('|')
+    p1=p[1]
+    period_2.append(p1)
+print(period_2)
+number_col=period_2[0]
+print(number_col)
+
+
+
+
+
+
+# 获取错误学号
+if (os.path.exists('/root/record_scores/wrong.csv')):
+    birth_weight_file = '/root/record_scores/wrong.csv'  # 路径固定
+    with open(birth_weight_file) as csvfile:
+        wrong = csvfile.readlines()
+
+    for w in wrong:
+        for i in range(2,rows+1):
+            number = ws.cell(row=i, column=int(number_col)).value
+            if int(number)==int(w):
+                for index in period_2[1:]:
+                    index=int(index)
+                    if  ws.cell(row=i, column=index).value is not None:
+                        ws[i][index-1].fill = fill_red
+    wb.save(check_file)
+
+
+
+birth_weight_file = '/root/record_scores/record.csv'  # 路径固定
+with open(birth_weight_file) as csvfile:
+    check = csvfile.readlines()
+
+birth_weight_file = '/root/record_scores/web_number.csv'  # 路径固定
+with open(birth_weight_file) as csvfile:
+    web_number = csvfile.readlines()
+
+
+wb = load_workbook(check_file)
+ws = wb.worksheets[0]
+rows=ws.max_row   #获取行数
+cols=ws.max_column
+
+
+
+
+
+
+# 根据check.csv文件校对成绩
+for c in check:
+    c=c.split(',')
+    c_number=c[0]
+    for i in range(2,rows+1):
+        number = ws.cell(row=i, column=int(number_col)).value
+        if int(number)==int(c_number):
+            for index in period_1[1:]:
+                p=index.split('|')
+                index=int(p[1])
+                c_index=int(p[0])
+                score=ws.cell(row=i, column=index).value
+                if score is not None and int(c[c_index]) == int(score):
+                    ws[i][index-1].fill = fill_green
+                elif score is not None and int(c[c_index]) != int(score):
+                    ws[i][index-1].fill = fill_red
+wb.save(check_file)
+
+
+# 根据web_number.csv文件校对网页上是否有多余学号
+numbers=[]
+for i in range(2,rows+1):
+    number = str(ws.cell(row=i, column=int(number_col)).value)
+    ws.cell(row=i, column=int(number_col), value=number)
+wb.save(check_file)
+for i in range(2,rows+1):
+    number = ws.cell(row=i, column=int(number_col)).value
+    numbers.append(number)
+
+
+# web_number_1=[]
+# for w in web_number:
+#     w=w.split('\r\n')
+#     w1=w[0]
+#     if w1 not in numbers:
+#         web_number_1.append(w1)
+
+# if len(web_number_1)>0:
+#     wb.create_sheet(title=u'页面多出学号',index=1)
+#     ws_1 = wb.worksheets[1]
+#     for x in range(1,len(web_number_1)+1):
+#         ws_1.cell(row=x, column=1, value=web_number_1[x-1])
+# wb.save(check_file)
+
+
+py finish
+//创建结束标志文件
+py begin
+# -*- coding: utf-8 -*-
+import os
+#dirpath是获取创建的路径
+dirpath="/root/rpa_file/"
+#若存在finish文件则删除
+if (os.path.exists(dirpath+"finish")):
+    os.remove(dirpath+"finish")
+
+#创建标志文件
+def text_create(name):
+    desktop_path = dirpath
+    full_path = desktop_path + name
+    file = open(full_path, 'w')
+
+text_create('finish')
+
+py finish
+js begin
+function formatDate(date) {
+    var d = new Date(date),
+        mm = '' + (d.getMonth() + 1),
+        dd = '' + d.getDate(),
+        yy = d.getFullYear(),
+        hh = '' + d.getHours(),
+        min = '' + d.getMinutes();
+    return [yy.toString(), (mm>9?'':'0')+mm, (dd>9?'':'0')+dd].join('-') + "_"+ (hh>9?'':'0')+hh+':'+(min>9?'':'0')+min;
+}
+now = formatDate(new Date());
+js finish
+write now+'录分流程结束' to /root/rpa_file/log.txt
+}
+else
+{
+https://jx.sspu.edu.cn/eams/teach/grade/course/teacher!taskList.action?lesson.semester.id=682
+if present('//td[contains(text(),"'+course_series+'")]')
+{
+read //td[contains(text(),"'+course_series+'")]/..//td[7] to total
+echo total
+read //td[contains(text(),"'+course_series+'")]/..//td[last()]//a[3]/@href to url
+//正式
+URL='jx.sspu.edu.cn'+url
+//测试
+//URL='202.121.241.67:8080' + url
+http://'+URL+'
+wait 2
+click //div[@id="tabPage2_1"]//td[4]//a[1]
+wait 2
+js begin
+function formatDate(date) {
+    var d = new Date(date),
+        mm = '' + (d.getMonth() + 1),
+        dd = '' + d.getDate(),
+        yy = d.getFullYear(),
+        hh = '' + d.getHours(),
+        min = '' + d.getMinutes();
+    return [yy.toString(), (mm>9?'':'0')+mm, (dd>9?'':'0')+dd].join('-') + "_"+ (hh>9?'':'0')+hh+':'+(min>9?'':'0')+min;
+}
+now = formatDate(new Date());
+js finish
+write now+'开始录入' to /root/rpa_file/log.txt
+wrong_number=[]
+number=[]
+usual_1=[]
+usual_2=[]
+usual_3=[]
+middle=[]
+end=[]
+csv_file=''+course_series+'.csv'
+load '+csv_file+' to lines
+array_lines=lines.split('\n')
+echo total
+//读网页上所有学号
+for (n=1; n<=total; n++)
+{
+id=n+1
+if present('//*[@id="gradeForm"]/table[2]/tbody/tr['+id+']/td[2]/text()')
+{
+id=n+1
+read //*[@id="gradeForm"]/table[2]/tbody/tr['+id+']/td[2]/text() to wnumber
+echo wnumber
+web_number = [wnumber]
+write csv_row(web_number) to web_number.csv
+}
+if present('//*[@id="gradeForm"]/table[2]/tbody/tr['+id+']/td[9]/text()')
+{
+read //*[@id="gradeForm"]/table[2]/tbody/tr['+id+']/td[9]/text() to wnumber
+echo wnumber
+web_number = [wnumber]
+write csv_row(web_number) to web_number.csv
+}
+}
+js begin
+function formatDate(date) {
+    var d = new Date(date),
+        mm = '' + (d.getMonth() + 1),
+        dd = '' + d.getDate(),
+        yy = d.getFullYear(),
+        hh = '' + d.getHours(),
+        min = '' + d.getMinutes();
+    return [yy.toString(), (mm>9?'':'0')+mm, (dd>9?'':'0')+dd].join('-') + "_"+ (hh>9?'':'0')+hh+':'+(min>9?'':'0')+min;
+}
+now = formatDate(new Date());
+js finish
+write now+'结束校对' to /root/rpa_file/log.txt
+snap page to /root/rpa_file/'+course_series+'.png
+//根据wrong.csv和record.csv对原始文件修改
+py begin
+# encoding:utf-8
+import pandas as pd
+import sys
+import codecs
+import xlrd
+import xlwt
+from xlutils.copy import copy
+from openpyxl import load_workbook
+from openpyxl.styles import Font, PatternFill, colors
+import csv
+import os
+#sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
+reload(sys)
+sys.setdefaultencoding('utf8')
+
+
+def get_userinfo():
+    birth_weight_file = '/root/record_scores/info.csv'  # 路径固定
+    with open(birth_weight_file) as csvfile:
+        mLines = csvfile.readlines()
+    targetLine = mLines[-1]
+    file_name = targetLine.split(',')[0]
+    course_series = targetLine.split(',')[1]
+    username = targetLine.split(',')[3]
+    password = targetLine.split(',')[4]
+    return file_name,course_series,username,password
+
+
+file_name,course_series,username,password=get_userinfo()
+check_file='/root/rpa_file/'+course_series+'-check.xlsx'
+fill_red = PatternFill("solid", fgColor="FF0000")
+fill_green = PatternFill("solid", fgColor="C1F4B8")
+
+# 获取period.csv写入列位置
+birth_weight_file = '/root/record_scores/period.csv'  # 路径固定
+with open(birth_weight_file) as csvfile:
+    period = csvfile.readlines()
+print(period)
+period_1=[]
+period_2=[]
+for p in period:
+    p=p.split('\r\n')
+    p1=p[0]
+    period_1.append(p1)
+print(period_1)
+for p in period_1:
+    p=p.split('|')
+    p1=p[1]
+    period_2.append(p1)
+print(period_2)
+number_col=period_2[0]
+print(number_col)
+
+
+
+
+
+
+# 获取错误学号
+if (os.path.exists('/root/record_scores/wrong.csv')):
+    birth_weight_file = '/root/record_scores/wrong.csv'  # 路径固定
+    with open(birth_weight_file) as csvfile:
+        wrong = csvfile.readlines()
+
+    for w in wrong:
+        for i in range(2,rows+1):
+            number = ws.cell(row=i, column=int(number_col)).value
+            if int(number)==int(w):
+                for index in period_2[1:]:
+                    index=int(index)
+                    if  ws.cell(row=i, column=index).value is not None:
+                        ws[i][index-1].fill = fill_red
+    wb.save(check_file)
+
+
+
+birth_weight_file = '/root/record_scores/record.csv'  # 路径固定
+with open(birth_weight_file) as csvfile:
+    check = csvfile.readlines()
+
+birth_weight_file = '/root/record_scores/web_number.csv'  # 路径固定
+with open(birth_weight_file) as csvfile:
+    web_number = csvfile.readlines()
+
+
+wb = load_workbook(check_file)
+ws = wb.worksheets[0]
+rows=ws.max_row   #获取行数
+cols=ws.max_column
+
+
+
+
+
+
+# 根据check.csv文件校对成绩
+for c in check:
+    c=c.split(',')
+    c_number=c[0]
+    for i in range(2,rows+1):
+        number = ws.cell(row=i, column=int(number_col)).value
+        if int(number)==int(c_number):
+            for index in period_1[1:]:
+                p=index.split('|')
+                index=int(p[1])
+                c_index=int(p[0])
+                score=ws.cell(row=i, column=index).value
+                if score is not None and int(c[c_index]) == int(score):
+                    ws[i][index-1].fill = fill_green
+                elif score is not None and int(c[c_index]) != int(score):
+                    ws[i][index-1].fill = fill_red
+wb.save(check_file)
+
+
+# 根据web_number.csv文件校对网页上是否有多余学号
+numbers=[]
+for i in range(2,rows+1):
+    number = str(ws.cell(row=i, column=int(number_col)).value)
+    ws.cell(row=i, column=int(number_col), value=number)
+wb.save(check_file)
+for i in range(2,rows+1):
+    number = ws.cell(row=i, column=int(number_col)).value
+    numbers.append(number)
+
+
+# web_number_1=[]
+# for w in web_number:
+#     w=w.split('\r\n')
+#     w1=w[0]
+#     if w1 not in numbers:
+#         web_number_1.append(w1)
+
+# if len(web_number_1)>0:
+#     wb.create_sheet(title=u'页面多出学号',index=1)
+#     ws_1 = wb.worksheets[1]
+#     for x in range(1,len(web_number_1)+1):
+#         ws_1.cell(row=x, column=1, value=web_number_1[x-1])
+# wb.save(check_file)
+
+
+py finish
+//创建结束标志文件
+py begin
+# -*- coding: utf-8 -*-
+import os
+#dirpath是获取创建的路径
+dirpath="/root/rpa_file/"
+#若存在finish文件则删除
+if (os.path.exists(dirpath+"finish")):
+    os.remove(dirpath+"finish")
+
+#创建标志文件
+def text_create(name):
+    desktop_path = dirpath
+    full_path = desktop_path + name
+    file = open(full_path, 'w')
+
+text_create('finish')
+
+py finish
+js begin
+function formatDate(date) {
+    var d = new Date(date),
+        mm = '' + (d.getMonth() + 1),
+        dd = '' + d.getDate(),
+        yy = d.getFullYear(),
+        hh = '' + d.getHours(),
+        min = '' + d.getMinutes();
+    return [yy.toString(), (mm>9?'':'0')+mm, (dd>9?'':'0')+dd].join('-') + "_"+ (hh>9?'':'0')+hh+':'+(min>9?'':'0')+min;
+}
+now = formatDate(new Date());
+js finish
+write now+'录分流程结束' to /root/rpa_file/log.txt
+}
+else
+{
+js begin
+function formatDate(date) {
+    var d = new Date(date),
+        mm = '' + (d.getMonth() + 1),
+        dd = '' + d.getDate(),
+        yy = d.getFullYear(),
+        hh = '' + d.getHours(),
+        min = '' + d.getMinutes();
+    return [yy.toString(), (mm>9?'':'0')+mm, (dd>9?'':'0')+dd].join('-') + "_"+ (hh>9?'':'0')+hh+':'+(min>9?'':'0')+min;
+}
+now = formatDate(new Date());
+js finish
+write now+'课程序号错误' to /root/rpa_file/log.txt
+write '课程序号错误' to /root/rpa_file/error.txt
+}
+}
+}

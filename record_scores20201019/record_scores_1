@@ -1,0 +1,218 @@
+tagui time
+write now+'开始录入' to /root/rpa_file/log.txt
+
+wrong_number=[]
+number=[]
+usual_1=[]
+usual_2=[]
+usual_3=[]
+middle=[]
+end=[]
+csv_file=''+course_series+'.csv'
+load '+csv_file+' to lines
+array_lines=lines.split('\n')
+
+//获取文件中有录入内容列
+number_col=-1
+end_col=-1
+middle_col=-1
+u3_col=-1
+u2_col=-1
+u1_col=-1
+items = array_lines[0].split(',')
+for (n=1; n<items.length; n++) 
+{
+    if (items[n].trim()=='学号' or items[n].trim()=='考号')
+    {
+        number_col=n
+    }
+
+    if (items[n].trim()=='期末' or items[n].trim()=='总分')
+    {
+        end_col=n
+    }
+
+    if (items[n].trim()=='期中')
+    {
+        middle_col=n
+    }
+
+    if (items[n].trim()=='平时成绩3' or items[n].trim()=='平时成绩I')
+    {
+        u3_col=n
+    }
+
+    if (items[n].trim()=='平时成绩2' or items[n].trim()=='平时成绩II')
+    {
+        u2_col=n
+    }
+
+    if (items[n].trim()=='平时成绩1' or items[n].trim()=='平时成绩Ⅲ')
+    {
+        u1_col=n
+    }   
+}
+echo number_col+' '+end_col+' '+middle_col+' '+u3_col+' '+u2_col+' '+u1_col
+
+
+//根据获得列的位置获取成绩
+for (n=1; n<array_lines.length; n++) 
+{
+    //n=70主动暂存页面等待10秒
+    if (n==70)
+    {
+        click //input[@id="bnJustSave"]
+        wait 10
+    }
+    items = array_lines[n].split(',')
+    number[n] = items[number_col].trim()
+    if (u1_col!=-1)
+    {
+        usual_1[n] = items[u1_col].trim()
+    }
+    else
+    {
+        usual_1[n] =''
+    }
+
+    if (u2_col!=-1)
+    {
+        usual_2[n] = items[u2_col].trim()
+    }
+    else
+    {
+        usual_2[n] =''
+    }
+
+    if (u3_col!=-1)
+    {
+        usual_3[n] = items[u3_col].trim()
+    }
+    else
+    {
+        usual_3[n] =''
+    }
+
+    if (middle_col!=-1)
+    {
+        middle[n] = items[middle_col].trim()
+    }
+    else
+    {
+        middle[n] =''
+    }
+
+    if (end_col!=-1)
+    {
+        end[n] = items[end_col].trim()
+    }
+    else
+    {
+        end[n] =''
+    }
+
+    
+    //网页上定位录入
+    if present('//td[contains(text(),"'+number[n]+'")]/preceding-sibling::td[1]')
+    {
+        read //td[contains(text(),"'+number[n]+'")]/preceding-sibling::td[1] to id
+        if usual_1[n]!=''
+        {
+            if present('//input[@id="USUALⅠ_'+id+'"]')
+            {
+                dclick //input[@id="USUALⅠ_'+id+'"]
+                enter  //input[@id="USUALⅠ_'+id+'"] as '+usual_1[n]+'
+            }
+        }
+        if usual_2[n]!=''
+        {
+            if present('//input[@id="USUALⅡ_'+id+'"]')
+            {
+                dclick //input[@id="USUALⅡ_'+id+'"]
+                enter  //input[@id="USUALⅡ_'+id+'"] as '+usual_2[n]+'
+            }
+        }
+        if usual_3[n]!=''
+        {
+            if present('//input[@id="USUALⅢ_'+id+'"]')
+            {
+                dclick //input[@id="USUALⅢ_'+id+'"]
+                enter  //input[@id="USUALⅢ_'+id+'"] as '+usual_3[n]+'
+            }
+        }
+        if middle[n]!=''
+        {
+            if present('//input[@id="MIDDLE_'+id+'"]')
+            {
+                dclick //input[@id="MIDDLE_'+id+'"]
+                enter  //input[@id="MIDDLE_'+id+'"] as '+middle[n]+'
+            }          
+        }
+        if end[n]!=''
+        {
+            if present('//input[@id="END_'+id+'"]')
+            {
+                dclick //input[@id="END_'+id+'"]
+                enter  //input[@id="END_'+id+'"] as '+end[n]+'
+            }
+        }
+    }
+    else
+    {
+        item_info = [number[n]]
+        write csv_row(item_info) to wrong.csv
+    }
+    
+}
+
+if present('//input[@id="bnJustSave"]')
+{
+    click //input[@id="bnJustSave"]
+    wait 1
+    tagui time
+    write now+'结束录入' to /root/rpa_file/log.txt
+    tagui time
+    write now+'开始校对' to /root/rpa_file/log.txt
+
+    //读网页上所有学号
+    for (n=1; n<=total; n++) 
+    {
+        id=n+1
+        if present('//*[@id="gradeForm"]/table[2]/tbody/tr['+id+']/td[2]/text()')
+        {
+            id=n+1
+            read //*[@id="gradeForm"]/table[2]/tbody/tr['+id+']/td[2]/text() to wnumber
+            echo wnumber
+            web_number = [wnumber]
+            write csv_row(web_number) to web_number.csv
+        }
+        if present('//*[@id="gradeForm"]/table[2]/tbody/tr['+id+']/td[9]/text()')
+        {
+            read //*[@id="gradeForm"]/table[2]/tbody/tr['+id+']/td[9]/text() to wnumber
+            echo wnumber
+            web_number = [wnumber]
+            write csv_row(web_number) to web_number.csv
+        }  
+                    
+    }
+    tagui time
+    write now+'结束校对' to /root/rpa_file/log.txt
+    snap page to /root/rpa_file/'+course_series+'.png
+
+
+    //根据wrong.csv和record.csv对原始文件修改
+    tagui file_operation/modify_check.py
+
+    //创建结束标志文件
+    tagui file_operation/file_finish.py
+
+    tagui time
+    write now+'录分流程结束' to /root/rpa_file/log.txt
+}
+else
+{
+    tagui time
+    write now+'流程中断' to /root/rpa_file/log.txt
+    write '流程中断' to /root/rpa_file/error.txt
+}
+

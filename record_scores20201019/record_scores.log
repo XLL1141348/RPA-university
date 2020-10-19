@@ -1,0 +1,238 @@
+
+START - automation started - Wed Sep 23 2020 22:34:03 GMT+0800 (CST)
+
+py # -*- coding: utf-8 -*-
+import os
+import csv
+dirpath="/root/rpa_file/"
+if (os.path.exists(dirpath+"start")):
+    os.remove(dirpath+"start")
+if (os.path.exists(dirpath+"finish")):
+    os.remove(dirpath+"finish")
+if (os.path.exists(dirpath+"error.txt")):
+    os.remove(dirpath+"error.txt")
+if (os.path.exists(dirpath+"retry")):
+    os.remove(dirpath+"retry")
+if (os.path.exists(dirpath+"log.txt")):
+    os.remove(dirpath+"log.txt")
+if (os.path.exists("/root/record_scores/period.csv")):
+    os.remove("/root/record_scores/period.csv")
+py # -*- coding: utf-8 -*-
+import os
+import csv
+dirpath="/root/record_scores/"
+if (os.path.exists(dirpath+"info.csv")):
+    os.remove(dirpath+"info.csv")
+if (os.path.exists(dirpath+"wrong.csv")):
+    os.remove(dirpath+"wrong.csv")
+if (os.path.exists(dirpath+"record.csv")):
+    os.remove(dirpath+"record.csv")
+if (os.path.exists(dirpath+"web_number.csv")):
+    os.remove(dirpath+"web_number.csv")
+with open(dirpath+"info.csv","w") as csvfile:
+    writer = csv.writer(csvfile)
+    writer.writerow(["upload_file","course_series","grade_selection","username","password","grade_persentage"])
+p1 is /root/datafiles/django/uploads/2020/09/23/1785_ngh3MBG.xlsx
+p2 is 1785
+p3 is 1
+p4 is 00000001657
+p5 is lj08201008
+p5 is 40/0/0/0/60
+write csv_row(item_info) to info.csv
+py # encoding:utf-8
+import pandas as pd
+import sys
+import codecs
+import xlrd
+import xlwt
+from xlutils.copy import copy
+from openpyxl import load_workbook
+from openpyxl.styles import Font, PatternFill, colors
+import csv
+import os
+#sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
+reload(sys)
+sys.setdefaultencoding('utf8')
+def get_userinfo():
+    birth_weight_file = '/root/record_scores/info.csv'  # 路径固定
+    with open(birth_weight_file) as csvfile:
+        mLines = csvfile.readlines()
+    targetLine = mLines[-1]
+    file_name = targetLine.split(',')[0]
+    course_series = targetLine.split(',')[1]
+    username = targetLine.split(',')[3]
+    password = targetLine.split(',')[4]
+    return file_name,course_series,username,password
+file_name,course_series,username,password=get_userinfo()
+create_csv='/root/record_scores/'+course_series+'.csv'
+check_file='/root/rpa_file/'+course_series+'-check.xlsx'
+check_png='/root/rpa_file/'+course_series+'.png'
+#先判断是否有该课程序号的csv文件，xlsx文件及png文件。有则删除
+if (os.path.exists(create_csv)):
+    os.remove(create_csv)
+if (os.path.exists(check_file)):
+    os.remove(check_file)
+if (os.path.exists(check_png)):
+    os.remove(check_png)
+#excel文件转csv格式,并统一转xlsx格式
+def get_student_list(path):  # 读取excel
+    df = pd.read_excel(path)
+    datadict = df.fillna('').to_dict(orient='record')
+    return datadict, df
+student_list, excel_tmp = get_student_list(file_name)  # 上传的原文件
+#excel_tmp.to_csv(create_csv,encoding='utf-8-sig')
+excel_tmp.to_excel(check_file)
+wb=load_workbook(check_file)
+sheet_names = wb.get_sheet_names()
+ws = wb.get_sheet_by_name(sheet_names[0])
+ws.delete_cols(1)
+wb.save(check_file)
+wb = load_workbook(check_file)
+ws = wb.worksheets[0]
+rows=ws.max_row   #获取行数
+cols=ws.max_column
+for i in range(1,cols+1):
+    name=ws.cell(row=1, column=i).value
+    if name=='平时成绩Ⅰ':
+        ws.cell(row=1, column=i, value='平时成绩1')
+    if name=='平时成绩Ⅱ':
+        ws.cell(row=1, column=i, value='平时成绩2')
+    if name=='平时成绩Ⅲ':
+        ws.cell(row=1, column=i, value='平时成绩3')
+wb.save(check_file)
+student_list, excel_tmp = get_student_list(check_file)
+excel_tmp.to_csv(create_csv,encoding='utf-8-sig')
+#data_xls = pd.read_excel(check_file, index_col=0)
+#data_xls.to_csv(create_csv, encoding='utf-8')
+load '+csv_file+' to lines
+load '+csv_file+' to lines
+2 8 7 6 5 4
+write csv_row(period) to period.csv
+write csv_row([str]) to period.csv
+write csv_row([str]) to period.csv
+py # encoding:utf-8
+import pandas as pd
+import sys
+import codecs
+import xlrd
+import xlwt
+from xlutils.copy import copy
+from openpyxl import load_workbook
+from openpyxl.styles import Font, PatternFill, colors
+import csv
+import os
+#sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
+reload(sys)
+sys.setdefaultencoding('utf8')
+def get_userinfo():
+    birth_weight_file = '/root/record_scores/info.csv'  # 路径固定
+    with open(birth_weight_file) as csvfile:
+        mLines = csvfile.readlines()
+    targetLine = mLines[-1]
+    file_name = targetLine.split(',')[0]
+    course_series = targetLine.split(',')[1]
+    username = targetLine.split(',')[3]
+    password = targetLine.split(',')[4]
+    return file_name,course_series,username,password
+file_name,course_series,username,password=get_userinfo()
+create_csv='/root/record_scores/'+course_series+'.csv'
+check_file='/root/rpa_file/'+course_series+'-check.xlsx'
+check_png='/root/rpa_file/'+course_series+'.png'
+# 获取period.csv写入列位置
+birth_weight_file = '/root/record_scores/period.csv'  # 路径固定
+with open(birth_weight_file) as csvfile:
+    period = csvfile.readlines()
+print(period)
+period_1=[]
+period_2=[]
+for p in period:
+    p=p.split('\r\n')
+    p1=p[0]
+    period_1.append(p1)
+print(period_1)
+for p in period_1:
+    p=p.split('|')
+    p1=p[1]
+    period_2.append(p1)
+print(period_2)
+number_col=period_2[0]
+print(number_col)
+wb = load_workbook(check_file)
+ws = wb.worksheets[0]
+rows=ws.max_row   #获取行数
+cols=ws.max_column
+numbers=[]
+for i in range(2,rows+1):
+    for index in period_1[1:]:
+        p=index.split('|')
+        index=int(p[1])
+        c_index=int(p[0])
+        s=ws.cell(row=i, column=index).value
+        if s==None:
+            ws.cell(row=i, column=index, value=0)
+        else:
+            score = float(ws.cell(row=i, column=index).value)
+            score = int(score+0.5)
+            ws.cell(row=i, column=index, value=score)
+wb.save(check_file)
+#excel文件转csv格式,并统一转xlsx格式
+def get_student_list(path):  # 读取excel
+    df = pd.read_excel(path)
+    datadict = df.fillna('').to_dict(orient='record')
+    return datadict, df
+student_list, excel_tmp = get_student_list(check_file)  # 上传的原文件
+excel_tmp.to_csv(create_csv,encoding='utf-8-sig')
+py # -*- coding: utf-8 -*-
+import os
+dirpath="/root/rpa_file/"
+#若存在start文件则删除
+if (os.path.exists(dirpath+"start")):
+    os.remove(dirpath+"start")
+#创建标志文件
+def text_create(name):
+    desktop_path = dirpath
+    full_path = desktop_path + name
+    file = open(full_path, 'w')
+text_create('start')
+write now+'录分流程开始' to /root/rpa_file/log.txt
+https://jx.sspu.edu.cn/eams/caslogin.action - EAMS 3.0.0
+wait 2
+dclick //input[@id="username"]
+wait 1
+enter //input[@id="username"] as 00000001657
+wait 1
+dclick //input[@id="password"]
+wait 1
+enter //input[@id="password"] as lj08201008
+wait 1
+click //input[@class="ip_2"]
+wait 2
+write now+'输入账号密码' to /root/rpa_file/log.txt
+https://jx.sspu.edu.cn/eams/teach/grade/course/teacher.action - EAMS 3.0.0
+wait 1
+https://jx.sspu.edu.cn/eams/teach/grade/course/teacher!taskList.action?lesson.semester.id=682 - 
+read //td[contains(text(),"1785")]/..//td[7] to total
+33
+read //td[contains(text(),"1785")]/..//td[8] to status
+未提交
+read //td[contains(text(),"1785")]/..//td[last()]//a[3]/@href to url
+http://jx.sspu.edu.cn/eams/teach/grade/course/teacher!inputTask.action?lessonId=143080 - EAMS 3.0.0
+wait 2
+write now+'课程已发布' to /root/rpa_file/log.txt
+py # -*- coding: utf-8 -*-
+import os
+#dirpath是获取创建的路径
+dirpath="/root/rpa_file/"
+#若存在finish文件则删除
+if (os.path.exists(dirpath+"finish")):
+    os.remove(dirpath+"finish")
+#创建标志文件
+def text_create(name):
+    desktop_path = dirpath
+    full_path = desktop_path + name
+    file = open(full_path, 'w')
+text_create('finish')
+
+https://jx.sspu.edu.cn/eams/teach/grade/course/teacher!inputTask.action?lessonId=143080 - EAMS 3.0.0
+FINISH - automation finished - 28.0s
+

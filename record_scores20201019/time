@@ -1,0 +1,13 @@
+js begin
+function formatDate(date) {
+    var d = new Date(date),
+        mm = '' + (d.getMonth() + 1),
+        dd = '' + d.getDate(),
+        yy = d.getFullYear(),
+        hh = '' + d.getHours(),
+        min = '' + d.getMinutes();
+    return [yy.toString(), (mm>9?'':'0')+mm, (dd>9?'':'0')+dd].join('-') + "_"+ (hh>9?'':'0')+hh+':'+(min>9?'':'0')+min;
+}
+now = formatDate(new Date());
+js finish
+

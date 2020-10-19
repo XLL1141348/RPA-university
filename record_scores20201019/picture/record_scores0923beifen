@@ -1,0 +1,283 @@
+//1.1删除标志文件及log日志文件
+tagui file_operation/file_delete.py
+//1.2创建参数info文件(先删除历史文件Info,wrong,record,web_number)
+tagui file_operation/file_info.py
+//1.3接收参数存入文件中，写入文件路径固定
+echo "p1 is " p1
+echo "p2 is " p2
+echo "p3 is " p3
+echo "p4 is " p4
+echo "p5 is " p5
+echo "p5 is " p6
+item_info=[p1,p2,p3,p4,p5,p6]
+write csv_row(item_info) to info.csv
+
+//1.4根据info.csv创建csv及xlsx(先删除历史文件)
+tagui file_operation/create_csv_check.py
+
+//从info.csv读输入账号密码
+csv_file='info.csv'
+load '+csv_file+' to lines
+array_lines=lines.split('\n')
+items = array_lines[1].split(',')
+course_series=items[1]
+username=items[3]
+psw=items[4]
+per_1=items[5]
+per=per_1.split('/')
+
+wrong_number=[]
+number=[]
+usual_1=[]
+usual_2=[]
+usual_3=[]
+middle=[]
+end=[]
+csv_file=''+course_series+'.csv'
+load '+csv_file+' to lines
+array_lines=lines.split('\n')
+
+//获取文件中有录入内容列
+number_col=-1
+end_col=-1
+middle_col=-1
+u3_col=-1
+u2_col=-1
+u1_col=-1
+items = array_lines[0].split(',')
+for (n=1; n<items.length; n++) 
+{
+    if (items[n].trim()=='学号' or items[n].trim()=='考号')
+    {
+        number_col=n
+    }
+
+    if (items[n].trim()=='期末' or items[n].trim()=='总分')
+    {
+        end_col=n
+    }
+
+    if (items[n].trim()=='期中')
+    {
+        middle_col=n
+    }
+
+    if (items[n].trim()=='平时成绩3' or items[n].trim()=='平时成绩I')
+    {
+        u3_col=n
+    }
+
+    if (items[n].trim()=='平时成绩2' or items[n].trim()=='平时成绩II')
+    {
+        u2_col=n
+    }
+
+    if (items[n].trim()=='平时成绩1' or items[n].trim()=='平时成绩Ⅲ')
+    {
+        u1_col=n
+    }   
+}
+echo number_col+' '+end_col+' '+middle_col+' '+u3_col+' '+u2_col+' '+u1_col
+
+//period.csv记录列位置
+period=['0|'+number_col]
+write csv_row(period) to period.csv
+items = array_lines[1].split(',')
+if (u1_col!=-1 and items[u1_col]!='')
+{
+    str='1|'+u1_col
+    write csv_row([str]) to period.csv
+}
+if (u2_col!=-1 and items[u2_col]!='')
+{
+    str='2|'+u2_col
+    write csv_row([str]) to period.csv
+}
+if (u3_col!=-1 and items[u3_col]!='')
+{
+    str='3|'+u3_col
+    write csv_row([str]) to period.csv
+}
+if (middle_col!=-1 and items[middle_col]!='')
+{
+    str='4|'+middle_col
+    write csv_row([str]) to period.csv
+}
+if (end_col!=-1 and items[end_col]!='')
+{
+    str='5|'+end_col
+    write csv_row([str]) to period.csv
+}
+tagui file_operation/modify_csv.py
+
+//创建开始标志文件
+tagui file_operation/file_start.py
+//创建日志文件
+tagui time
+write now+'录分流程开始' to /root/rpa_file/log.txt
+
+
+
+//正式环境
+https://jx.sspu.edu.cn/eams/caslogin.action
+//测试环境
+//http://202.121.241.67:8080/eams/login.action?ekingstar=2
+wait 2
+
+dclick //input[@id="username"]
+wait 1
+enter //input[@id="username"] as '+username+'
+wait 1
+dclick //input[@id="password"]
+wait 1
+enter //input[@id="password"] as '+psw+'
+wait 1
+click //input[@class="ip_2"]
+wait 2
+//出现用户密码错误则说明账号或者密码错误
+if present('//td[@class="td_1"]//font')
+{
+    tagui time
+    write now+'账号密码错误' to /root/rpa_file/log.txt
+    write '账号密码错误' to /root/rpa_file/error.txt
+}
+else
+{
+    tagui time
+    write now+'输入账号密码' to /root/rpa_file/log.txt
+
+    //测试
+    //http://202.121.241.67:8080/eams/teach/grade/course/teacher.action
+    //正式
+    https://jx.sspu.edu.cn/eams/teach/grade/course/teacher.action
+    wait 1
+
+
+    if present('//td[contains(text(),"'+course_series+'")]')
+    {
+        read //td[contains(text(),"'+course_series+'")]/..//td[7] to total
+        echo total
+
+
+        read //td[contains(text(),"'+course_series+'")]/..//td[8] to status
+        echo status
+        
+       
+        read //td[contains(text(),"'+course_series+'")]/..//td[last()]//a[3]/@href to url
+        //正式
+        URL='jx.sspu.edu.cn'+url
+        //测试
+        //URL='202.121.241.67:8080' + url
+        http://'+URL+'
+        wait 2
+
+
+        if per[0]!=0
+        {
+            dclick //input[@name="examGradeState3.percent"]
+            enter  //input[@name="examGradeState3.percent"] as '+per[0]+'
+        }
+        if per[1]!=0
+        {
+            dclick //input[@name="examGradeState31.percent"]
+            enter  //input[@name="examGradeState31.percent"] as '+per[1]+'
+        }
+        if per[2]!=0
+        {
+            dclick //input[@name="examGradeState32.percent"]
+            enter  //input[@name="examGradeState32.percent"] as '+per[2]+'
+        }
+        if per[3]!=0
+        {
+            dclick //input[@name="examGradeState1.percent"]
+            enter  //input[@name="examGradeState1.percent"] as '+per[3]+'
+        }
+        if per[4]!=0
+        {
+            dclick //input[@name="examGradeState2.percent"]
+            enter  //input[@name="examGradeState2.percent"] as '+per[4]+'
+        }
+
+
+        click //div[@id="tabPage2_1"]//td[4]//a[1]
+        wait 2
+
+        tagui record_scores_1
+    }
+    else
+    {
+        https://jx.sspu.edu.cn/eams/teach/grade/course/teacher!taskList.action?lesson.semester.id=682
+        if present('//td[contains(text(),"'+course_series+'")]')
+        {
+            read //td[contains(text(),"'+course_series+'")]/..//td[7] to total
+            echo total
+
+
+            read //td[contains(text(),"'+course_series+'")]/..//td[8] to status
+            echo status
+            
+            
+            read //td[contains(text(),"'+course_series+'")]/..//td[last()]//a[3]/@href to url
+            //正式
+            URL='jx.sspu.edu.cn'+url
+            //测试
+            //URL='202.121.241.67:8080' + url
+            http://'+URL+'
+            wait 2
+
+
+            if per[0]!=0
+            {
+                dclick //input[@name="examGradeState3.percent"]
+                enter  //input[@name="examGradeState3.percent"] as '+per[0]+'
+            }
+            if per[1]!=0
+            {
+                dclick //input[@name="examGradeState31.percent"]
+                enter  //input[@name="examGradeState31.percent"] as '+per[1]+'
+            }
+            if per[2]!=0
+            {
+                dclick //input[@name="examGradeState32.percent"]
+                enter  //input[@name="examGradeState32.percent"] as '+per[2]+'
+            }
+            if per[3]!=0
+            {
+                dclick //input[@name="examGradeState1.percent"]
+                enter  //input[@name="examGradeState1.percent"] as '+per[3]+'
+            }
+            if per[4]!=0
+            {
+                dclick //input[@name="examGradeState2.percent"]
+                enter  //input[@name="examGradeState2.percent"] as '+per[4]+'
+            }
+
+
+            click //div[@id="tabPage2_1"]//td[4]//a[1]
+            wait 2
+
+            tagui record_scores_1
+            
+        }
+        else
+        {
+            tagui time
+            write now+'课程序号错误' to /root/rpa_file/log.txt
+            write '课程序号错误' to /root/rpa_file/error.txt
+        }
+        
+    }
+
+}
+
+
+
+
+
+
+
+
+
+
+
+

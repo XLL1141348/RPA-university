@@ -1,0 +1,600 @@
+
+START - automation started - Wed Sep 09 2020 16:50:46 GMT+0800 (CST)
+
+py # -*- coding: utf-8 -*-
+import os
+import csv
+dirpath="/root/rpa_file/"
+if (os.path.exists(dirpath+"start")):
+    os.remove(dirpath+"start")
+if (os.path.exists(dirpath+"finish")):
+    os.remove(dirpath+"finish")
+if (os.path.exists(dirpath+"error.txt")):
+    os.remove(dirpath+"error.txt")
+if (os.path.exists(dirpath+"retry")):
+    os.remove(dirpath+"retry")
+if (os.path.exists(dirpath+"log.txt")):
+    os.remove(dirpath+"log.txt")
+if (os.path.exists("/root/record_scores/period.csv")):
+    os.remove("/root/record_scores/period.csv")
+py # -*- coding: utf-8 -*-
+import os
+import csv
+dirpath="/root/record_scores/"
+if (os.path.exists(dirpath+"info.csv")):
+    os.remove(dirpath+"info.csv")
+if (os.path.exists(dirpath+"wrong.csv")):
+    os.remove(dirpath+"wrong.csv")
+if (os.path.exists(dirpath+"record.csv")):
+    os.remove(dirpath+"record.csv")
+if (os.path.exists(dirpath+"web_number.csv")):
+    os.remove(dirpath+"web_number.csv")
+with open(dirpath+"info.csv","w") as csvfile:
+    writer = csv.writer(csvfile)
+    writer.writerow(["upload_file","course_series","grade_selection","username","password","grade_persentage"])
+p1 is /root/datafiles/1467.xls
+p2 is 1854
+p3 is xll
+p4 is 2503
+p5 is Woshigaoyong1981
+p5 is 50/20/0/0/30
+write csv_row(item_info) to info.csv
+py # encoding:utf-8
+import pandas as pd
+import sys
+import codecs
+import xlrd
+import xlwt
+from xlutils.copy import copy
+from openpyxl import load_workbook
+from openpyxl.styles import Font, PatternFill, colors
+import csv
+import os
+#sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
+reload(sys)
+sys.setdefaultencoding('utf8')
+def get_userinfo():
+    birth_weight_file = '/root/record_scores/info.csv'  # 路径固定
+    with open(birth_weight_file) as csvfile:
+        mLines = csvfile.readlines()
+    targetLine = mLines[-1]
+    file_name = targetLine.split(',')[0]
+    course_series = targetLine.split(',')[1]
+    username = targetLine.split(',')[3]
+    password = targetLine.split(',')[4]
+    return file_name,course_series,username,password
+file_name,course_series,username,password=get_userinfo()
+create_csv='/root/record_scores/'+course_series+'.csv'
+check_file='/root/rpa_file/'+course_series+'-check.xlsx'
+check_png='/root/rpa_file/'+course_series+'.png'
+#先判断是否有该课程序号的csv文件，xlsx文件及png文件。有则删除
+if (os.path.exists(create_csv)):
+    os.remove(create_csv)
+if (os.path.exists(check_file)):
+    os.remove(check_file)
+if (os.path.exists(check_png)):
+    os.remove(check_png)
+#excel文件转csv格式,并统一转xlsx格式
+def get_student_list(path):  # 读取excel
+    df = pd.read_excel(path)
+    datadict = df.fillna('').to_dict(orient='record')
+    return datadict, df
+student_list, excel_tmp = get_student_list(file_name)  # 上传的原文件
+excel_tmp.to_csv(create_csv,encoding='utf-8-sig')
+excel_tmp.to_excel(check_file)
+wb=load_workbook(check_file)
+sheet_names = wb.get_sheet_names()
+ws = wb.get_sheet_by_name(sheet_names[0])
+ws.delete_cols(1)
+wb.save(check_file)
+#data_xls = pd.read_excel(check_file, index_col=0)
+#data_xls.to_csv(create_csv, encoding='utf-8')
+load '+csv_file+' to lines
+load '+csv_file+' to lines
+2 8 7 6 5 4
+write csv_row(period) to period.csv
+write csv_row([str]) to period.csv
+write csv_row([str]) to period.csv
+write csv_row([str]) to period.csv
+py # encoding:utf-8
+import pandas as pd
+import sys
+import codecs
+import xlrd
+import xlwt
+from xlutils.copy import copy
+from openpyxl import load_workbook
+from openpyxl.styles import Font, PatternFill, colors
+import csv
+import os
+#sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
+reload(sys)
+sys.setdefaultencoding('utf8')
+def get_userinfo():
+    birth_weight_file = '/root/record_scores/info.csv'  # 路径固定
+    with open(birth_weight_file) as csvfile:
+        mLines = csvfile.readlines()
+    targetLine = mLines[-1]
+    file_name = targetLine.split(',')[0]
+    course_series = targetLine.split(',')[1]
+    username = targetLine.split(',')[3]
+    password = targetLine.split(',')[4]
+    return file_name,course_series,username,password
+file_name,course_series,username,password=get_userinfo()
+create_csv='/root/record_scores/'+course_series+'.csv'
+check_file='/root/rpa_file/'+course_series+'-check.xlsx'
+check_png='/root/rpa_file/'+course_series+'.png'
+# 获取period.csv写入列位置
+birth_weight_file = '/root/record_scores/period.csv'  # 路径固定
+with open(birth_weight_file) as csvfile:
+    period = csvfile.readlines()
+print(period)
+period_1=[]
+period_2=[]
+for p in period:
+    p=p.split('\r\n')
+    p1=p[0]
+    period_1.append(p1)
+print(period_1)
+for p in period_1:
+    p=p.split('|')
+    p1=p[1]
+    period_2.append(p1)
+print(period_2)
+number_col=period_2[0]
+print(number_col)
+wb = load_workbook(check_file)
+ws = wb.worksheets[0]
+rows=ws.max_row   #获取行数
+cols=ws.max_column
+numbers=[]
+for i in range(2,rows+1):
+    for index in period_1[1:]:
+        p=index.split('|')
+        index=int(p[1])
+        c_index=int(p[0])
+        score = int(ws.cell(row=i, column=index).value)
+        ws.cell(row=i, column=index, value=score)
+wb.save(check_file)
+#excel文件转csv格式,并统一转xlsx格式
+def get_student_list(path):  # 读取excel
+    df = pd.read_excel(path)
+    datadict = df.fillna('').to_dict(orient='record')
+    return datadict, df
+student_list, excel_tmp = get_student_list(check_file)  # 上传的原文件
+excel_tmp.to_csv(create_csv,encoding='utf-8-sig')
+py # -*- coding: utf-8 -*-
+import os
+dirpath="/root/rpa_file/"
+#若存在start文件则删除
+if (os.path.exists(dirpath+"start")):
+    os.remove(dirpath+"start")
+#创建标志文件
+def text_create(name):
+    desktop_path = dirpath
+    full_path = desktop_path + name
+    file = open(full_path, 'w')
+text_create('start')
+write now+'录分流程开始' to /root/rpa_file/log.txt
+https://jx.sspu.edu.cn/eams/caslogin.action - EAMS 3.0.0
+wait 2
+dclick //input[@id="username"]
+wait 1
+enter //input[@id="username"] as 2503
+wait 1
+dclick //input[@id="password"]
+wait 1
+enter //input[@id="password"] as Woshigaoyong1981
+wait 1
+click //input[@class="ip_2"]
+wait 2
+write now+'输入账号密码' to /root/rpa_file/log.txt
+https://jx.sspu.edu.cn/eams/teach/grade/course/teacher.action - EAMS 3.0.0
+wait 1
+https://jx.sspu.edu.cn/eams/teach/grade/course/teacher!taskList.action?lesson.semester.id=682 - 
+read //td[contains(text(),"1854")]/..//td[7] to total
+89
+read //td[contains(text(),"1854")]/..//td[last()]//a[3]/@href to url
+http://jx.sspu.edu.cn/eams/teach/grade/course/teacher!inputTask.action?lessonId=143149 - EAMS 3.0.0
+wait 2
+click //div[@id="tabPage2_1"]//td[4]//a[1]
+wait 2
+write now+'开始录入' to /root/rpa_file/log.txt
+load '+csv_file+' to lines
+89
+read //*[@id="gradeForm"]/table[2]/tbody/tr[2]/td[2]/text() to wnumber
+20191110105
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[2]/td[9]/text() to wnumber
+20191111203
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[3]/td[2]/text() to wnumber
+20191110106
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[3]/td[9]/text() to wnumber
+20191111204
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[4]/td[2]/text() to wnumber
+20191110109
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[4]/td[9]/text() to wnumber
+20191111205
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[5]/td[2]/text() to wnumber
+20191110114
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[5]/td[9]/text() to wnumber
+20191111207
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[6]/td[2]/text() to wnumber
+20191110118
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[6]/td[9]/text() to wnumber
+20191111212
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[7]/td[2]/text() to wnumber
+20191110119
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[7]/td[9]/text() to wnumber
+20191111213
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[8]/td[2]/text() to wnumber
+20191110122
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[8]/td[9]/text() to wnumber
+20191111216
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[9]/td[2]/text() to wnumber
+20191110137
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[9]/td[9]/text() to wnumber
+20191111220
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[10]/td[2]/text() to wnumber
+20191110138
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[10]/td[9]/text() to wnumber
+20191111223
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[11]/td[2]/text() to wnumber
+20191110139
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[11]/td[9]/text() to wnumber
+20191111228
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[12]/td[2]/text() to wnumber
+20191110503
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[12]/td[9]/text() to wnumber
+20191111234
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[13]/td[2]/text() to wnumber
+20191110505
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[13]/td[9]/text() to wnumber
+20191111305
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[14]/td[2]/text() to wnumber
+20191110506
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[14]/td[9]/text() to wnumber
+20191111312
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[15]/td[2]/text() to wnumber
+20191110512
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[15]/td[9]/text() to wnumber
+20191111314
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[16]/td[2]/text() to wnumber
+20191110517
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[16]/td[9]/text() to wnumber
+20191111320
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[17]/td[2]/text() to wnumber
+20191110518
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[17]/td[9]/text() to wnumber
+20191111322
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[18]/td[2]/text() to wnumber
+20191110521
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[18]/td[9]/text() to wnumber
+20191111327
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[19]/td[2]/text() to wnumber
+20191110525
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[19]/td[9]/text() to wnumber
+20191111801
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[20]/td[2]/text() to wnumber
+20191110608
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[20]/td[9]/text() to wnumber
+20191111803
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[21]/td[2]/text() to wnumber
+20191110612
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[21]/td[9]/text() to wnumber
+20191111804
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[22]/td[2]/text() to wnumber
+20191110616
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[22]/td[9]/text() to wnumber
+20191111810
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[23]/td[2]/text() to wnumber
+20191110619
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[23]/td[9]/text() to wnumber
+20191111813
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[24]/td[2]/text() to wnumber
+20191110622
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[24]/td[9]/text() to wnumber
+20191111816
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[25]/td[2]/text() to wnumber
+20191110623
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[25]/td[9]/text() to wnumber
+20191111821
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[26]/td[2]/text() to wnumber
+20191110627
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[26]/td[9]/text() to wnumber
+20191111822
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[27]/td[2]/text() to wnumber
+20191110629
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[27]/td[9]/text() to wnumber
+20191111825
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[28]/td[2]/text() to wnumber
+20191110701
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[28]/td[9]/text() to wnumber
+20191111832
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[29]/td[2]/text() to wnumber
+20191110702
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[29]/td[9]/text() to wnumber
+20191111837
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[30]/td[2]/text() to wnumber
+20191110705
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[30]/td[9]/text() to wnumber
+20191111838
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[31]/td[2]/text() to wnumber
+20191110708
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[31]/td[9]/text() to wnumber
+20191113201
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[32]/td[2]/text() to wnumber
+20191110710
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[32]/td[9]/text() to wnumber
+20191113202
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[33]/td[2]/text() to wnumber
+20191110727
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[33]/td[9]/text() to wnumber
+20191113205
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[34]/td[2]/text() to wnumber
+20191110732
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[34]/td[9]/text() to wnumber
+20191113207
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[35]/td[2]/text() to wnumber
+20191110734
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[35]/td[9]/text() to wnumber
+20191113212
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[36]/td[2]/text() to wnumber
+20191110802
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[36]/td[9]/text() to wnumber
+20191113219
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[37]/td[2]/text() to wnumber
+20191110805
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[37]/td[9]/text() to wnumber
+20191113223
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[38]/td[2]/text() to wnumber
+20191110806
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[38]/td[9]/text() to wnumber
+20191113227
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[39]/td[2]/text() to wnumber
+20191110818
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[39]/td[9]/text() to wnumber
+20191113302
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[40]/td[2]/text() to wnumber
+20191110819
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[40]/td[9]/text() to wnumber
+20191113327
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[41]/td[2]/text() to wnumber
+20191110830
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[41]/td[9]/text() to wnumber
+20191113333
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[42]/td[2]/text() to wnumber
+20191110831
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[42]/td[9]/text() to wnumber
+20191113514
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[43]/td[2]/text() to wnumber
+20191110835
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[43]/td[9]/text() to wnumber
+20191113519
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[44]/td[2]/text() to wnumber
+20191110836
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[44]/td[9]/text() to wnumber
+20191113526
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[45]/td[2]/text() to wnumber
+20191111201
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[45]/td[9]/text() to wnumber
+20191113535
+write csv_row(web_number) to web_number.csv
+read //*[@id="gradeForm"]/table[2]/tbody/tr[46]/td[2]/text() to wnumber
+20191111202
+write csv_row(web_number) to web_number.csv
+write now+'结束校对' to /root/rpa_file/log.txt
+snap page to /root/rpa_file/1854.png
+py # encoding:utf-8
+import pandas as pd
+import sys
+import codecs
+import xlrd
+import xlwt
+from xlutils.copy import copy
+from openpyxl import load_workbook
+from openpyxl.styles import Font, PatternFill, colors
+import csv
+import os
+#sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
+reload(sys)
+sys.setdefaultencoding('utf8')
+def get_userinfo():
+    birth_weight_file = '/root/record_scores/info.csv'  # 路径固定
+    with open(birth_weight_file) as csvfile:
+        mLines = csvfile.readlines()
+    targetLine = mLines[-1]
+    file_name = targetLine.split(',')[0]
+    course_series = targetLine.split(',')[1]
+    username = targetLine.split(',')[3]
+    password = targetLine.split(',')[4]
+    return file_name,course_series,username,password
+file_name,course_series,username,password=get_userinfo()
+check_file='/root/rpa_file/'+course_series+'-check.xlsx'
+fill_red = PatternFill("solid", fgColor="FF0000")
+fill_green = PatternFill("solid", fgColor="C1F4B8")
+# 获取period.csv写入列位置
+birth_weight_file = '/root/record_scores/period.csv'  # 路径固定
+with open(birth_weight_file) as csvfile:
+    period = csvfile.readlines()
+print(period)
+period_1=[]
+period_2=[]
+for p in period:
+    p=p.split('\r\n')
+    p1=p[0]
+    period_1.append(p1)
+print(period_1)
+for p in period_1:
+    p=p.split('|')
+    p1=p[1]
+    period_2.append(p1)
+print(period_2)
+number_col=period_2[0]
+print(number_col)
+# 获取错误学号
+if (os.path.exists('/root/record_scores/wrong.csv')):
+    birth_weight_file = '/root/record_scores/wrong.csv'  # 路径固定
+    with open(birth_weight_file) as csvfile:
+        wrong = csvfile.readlines()
+    for w in wrong:
+        for i in range(2,rows+1):
+            number = ws.cell(row=i, column=int(number_col)).value
+            if int(number)==int(w):
+                for index in period_2[1:]:
+                    index=int(index)
+                    if  ws.cell(row=i, column=index).value is not None:
+                        ws[i][index-1].fill = fill_red
+    wb.save(check_file)
+birth_weight_file = '/root/record_scores/record.csv'  # 路径固定
+with open(birth_weight_file) as csvfile:
+    check = csvfile.readlines()
+birth_weight_file = '/root/record_scores/web_number.csv'  # 路径固定
+with open(birth_weight_file) as csvfile:
+    web_number = csvfile.readlines()
+wb = load_workbook(check_file)
+ws = wb.worksheets[0]
+rows=ws.max_row   #获取行数
+cols=ws.max_column
+# 根据check.csv文件校对成绩
+for c in check:
+    c=c.split(',')
+    c_number=c[0]
+    for i in range(2,rows+1):
+        number = ws.cell(row=i, column=int(number_col)).value
+        if int(number)==int(c_number):
+            for index in period_1[1:]:
+                p=index.split('|')
+                index=int(p[1])
+                c_index=int(p[0])
+                score=ws.cell(row=i, column=index).value
+                if score is not None and int(c[c_index]) == int(score):
+                    ws[i][index-1].fill = fill_green
+                elif score is not None and int(c[c_index]) != int(score):
+                    ws[i][index-1].fill = fill_red
+wb.save(check_file)
+# 根据web_number.csv文件校对网页上是否有多余学号
+numbers=[]
+for i in range(2,rows+1):
+    number = str(ws.cell(row=i, column=int(number_col)).value)
+    ws.cell(row=i, column=int(number_col), value=number)
+wb.save(check_file)
+for i in range(2,rows+1):
+    number = ws.cell(row=i, column=int(number_col)).value
+    numbers.append(number)
+# web_number_1=[]
+# for w in web_number:
+#     w=w.split('\r\n')
+#     w1=w[0]
+#     if w1 not in numbers:
+#         web_number_1.append(w1)
+# if len(web_number_1)>0:
+#     wb.create_sheet(title=u'页面多出学号',index=1)
+#     ws_1 = wb.worksheets[1]
+#     for x in range(1,len(web_number_1)+1):
+#         ws_1.cell(row=x, column=1, value=web_number_1[x-1])
+# wb.save(check_file)
+py # -*- coding: utf-8 -*-
+import os
+#dirpath是获取创建的路径
+dirpath="/root/rpa_file/"
+#若存在finish文件则删除
+if (os.path.exists(dirpath+"finish")):
+    os.remove(dirpath+"finish")
+#创建标志文件
+def text_create(name):
+    desktop_path = dirpath
+    full_path = desktop_path + name
+    file = open(full_path, 'w')
+text_create('finish')
+write now+'录分流程结束' to /root/rpa_file/log.txt
+
+https://jx.sspu.edu.cn/eams/teach/grade/course/teacher-ga!input.action - EAMS 3.0.0
+FINISH - automation finished - 85.2s
+
